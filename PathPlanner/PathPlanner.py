@@ -247,6 +247,13 @@ class PathPlannerWidget(ScriptedLoadableModuleWidget):
     ConnectionCollapsibleButton.text = "Connection with Smart Template" 
     ConnectionFormLayout = qt.QGridLayout(ConnectionCollapsibleButton) #QBoxLayout(ConnectionCollapsibleButton)
     
+    # Server Configuration
+    self.ServerConfigLabel = qt.QLabel('Server IP/Port')
+    self.IPtxtBox = qt.QLineEdit('192.168.7.2')
+    self.IPtxtBox.toolTip = "Server IP"
+    self.PortTxtBox = qt.QLineEdit('18944')
+    self.PortTxtBox.toolTip = "Server Port"
+
     # Connect Button
     self.openIGTL = qt.QPushButton("Connect")
     self.openIGTL.toolTip = "Start openIGTLink"
@@ -282,7 +289,6 @@ class PathPlannerWidget(ScriptedLoadableModuleWidget):
     self.sendReconnectButton.toolTip = "Reconect to Galil serial comunication"
     self.sendReconnectButton.enabled = False
 
-
     self.footSwitchStatus = qt.QLabel()
     self.footSwitchStatus.setText("Switch OFF")
     self.footSwitchStatus.setStyleSheet("background-color: pink;border: 1px solid black;")
@@ -313,20 +319,24 @@ class PathPlannerWidget(ScriptedLoadableModuleWidget):
 
     self.layout.addWidget(ConnectionCollapsibleButton)
 
-    ConnectionFormLayout.addWidget(self.openIGTL,0,1)
-    ConnectionFormLayout.addWidget(self.connectionStatus,0,2)
-    ConnectionFormLayout.addWidget(self.galilStatus,0,3)
+    ConnectionFormLayout.addWidget(self.ServerConfigLabel,0,1)
+    ConnectionFormLayout.addWidget(self.IPtxtBox,0,2)
+    ConnectionFormLayout.addWidget(self.PortTxtBox,0,3)
 
-    ConnectionFormLayout.addWidget(self.zFrameButton,1,1)
-    ConnectionFormLayout.addWidget(self.sendTargetButton,1,2)
-    ConnectionFormLayout.addWidget(self.sendReconnectButton,1,3)
+    ConnectionFormLayout.addWidget(self.openIGTL,1,1)
+    ConnectionFormLayout.addWidget(self.connectionStatus,1,2)
+    ConnectionFormLayout.addWidget(self.galilStatus,1,3)
 
-    ConnectionFormLayout.addWidget(self.zFrameStatus,2,1)
-    ConnectionFormLayout.addWidget(self.targetStatus,2,2)
-    ConnectionFormLayout.addWidget(self.angleStatus,2,3)
+    ConnectionFormLayout.addWidget(self.zFrameButton,2,1)
+    ConnectionFormLayout.addWidget(self.sendTargetButton,2,2)
+    ConnectionFormLayout.addWidget(self.sendReconnectButton,2,3)
 
-    ConnectionFormLayout.addWidget(self.sendMoveButton,3,2)
-    ConnectionFormLayout.addWidget(self.sendInitButton,3,1)
+    ConnectionFormLayout.addWidget(self.zFrameStatus,3,1)
+    ConnectionFormLayout.addWidget(self.targetStatus,3,2)
+    ConnectionFormLayout.addWidget(self.angleStatus,3,3)
+
+    ConnectionFormLayout.addWidget(self.sendMoveButton,4,2)
+    ConnectionFormLayout.addWidget(self.sendInitButton,4,1)
 
     # connections
     self.openIGTL.connect('clicked(bool)', self.onOpenIGTL)
@@ -516,7 +526,7 @@ class PathPlannerWidget(ScriptedLoadableModuleWidget):
       print('- Target NOT sent -\n')
 
   def onOpenIGTL(self):
-    if self.logic.openConnection():
+    if self.logic.openConnection(self.IPtxtBox.text, self.PortTxtBox.text):
       self.connectionStatus.setStyleSheet("background-color: green;border: 1px solid black;")
       self.connectionStatus.setText("OpenIGTL")
       self.zFrameButton.enabled = True
@@ -836,7 +846,7 @@ class PathPlannerLogic(ScriptedLoadableModuleLogic):
       print('- There is no zFrame on Slicer scene -')
       return False    
 
-  def openConnection(self):
+  def openConnection(self, IP, Port):
 
     try:
       slicer.util.getNodesByClass('vtkMRMLIGTLConnectorNode')
@@ -845,9 +855,13 @@ class PathPlannerLogic(ScriptedLoadableModuleLogic):
     except:
       self.cnode = slicer.vtkMRMLIGTLConnectorNode()
       slicer.mrmlScene.AddNode(self.cnode)
-      self.cnode.SetTypeClient('192.168.7.2',18944)
+      # FOR TESTING ONLY - DELETE AFTER
+      # self.cnode.SetTypeClient('localhost',18944)
+      self.cnode.SetTypeClient(IP, int(Port))
+      # self.cnode.SetTypeClient('192.168.7.2',18944)
       self.cnode.SetName("OIGTL")
       self.cnode.Start()
+      print('Started OpenIGTLink Client (' + IP + ' - ' + Port + ')')
     
     return True
 
